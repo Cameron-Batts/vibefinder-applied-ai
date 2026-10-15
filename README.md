@@ -1,85 +1,85 @@
-# VibeFinder: Music Recommender Simulation
+# VibeFinder: Applied AI System
 
-## Project Summary
+## Summary and Base Project
 
-VibeFinder is a CLI-first Python recommender. It compares 18 songs with a user's preferred genre, mood, and energy, then returns five recommendations with explanations. It uses fixed rules rather than a trained machine-learning model.
+This project extends my Module 3 Music Recommender Simulation, VibeFinder. The original project scored songs using genre, mood, and energy and returned explained top-five recommendations. It supported three taste profiles and a weight experiment.
 
-## How The System Works
+Original repository:
+https://github.com/Cameron-Batts/ai110-module3show-musicrecommendersimulation-starter
 
-Collaborative filtering uses patterns in other users' behavior, such as listening histories, likes, skips, and playlists. Content-based filtering compares song attributes with a user's preferences. This project uses content-based filtering without listening histories or comparisons between users.
+The applied system adds validated requests, catalog checks, coverage warnings, runtime output verification, logging, and automated reliability tests.
 
-Background sources:
-- https://support.google.com/youtube/answer/16089387?hl=en
-- https://research.google/pubs/content-based-related-video-recommendations/
+## Integrated AI Feature: Reliability System
 
-### Features and profiles
+The selected advanced feature is a reliability and testing system integrated into the main recommendation application.
 
-Song stores id, title, artist, genre, mood, energy, tempo_bpm, valence, danceability, and acousticness. The current scoring rule uses genre, mood, and energy.
+Every CLI request passes through src/system.py. Invalid preferences or catalog data block recommendations. Unknown genre or mood labels trigger needs_review warnings. Failed output checks withhold results.
 
-UserProfile stores favorite_genre, favorite_mood, target_energy, and likes_acoustic. Acoustic preference is unused in this version. The CLI uses dictionaries containing genre, mood, and energy.
+The recommender remains a rule-based content-based system. It does not use an LLM, RAG, fine-tuning, or autonomous agent planning.
 
-The catalog contains the original 10 songs plus 8 AI-generated fictional additions. The added values are illustrative rather than measurements of actual recordings.
+## Architecture Overview
 
-### Algorithm Recipe
+The CLI loads the CSV and sends requests through validation, coverage checks, scoring, ranking, and output verification. Users can review partial matches and revise their preferences. Logging records request status and errors.
 
-- Add 2 points for a genre match.
-- Add 1 point for a mood match.
-- Add energy similarity: 1 - abs(song_energy - target_energy).
-- Sort every song by total score, highest first.
-- Return the top five with explanations.
+Required Mermaid source: [diagrams/architecture.mmd](diagrams/architecture.mmd)
 
-Sunrise City scores 2 + 1 + 0.98 = 3.98 for the pop/happy/0.8 profile. Closer energy earns more points. Valid energy values range from zero to one, producing total scores from zero to four.
+```mermaid
+flowchart TD
+    User["User preferences"] --> CLI["CLI: main.py"]
+    CSV["Song catalog: songs.csv"] --> Loader["CSV loader"]
+    Loader --> Pipeline["Request pipeline: system.py"]
+    CLI --> Pipeline
+    Pipeline --> Validate{"Input and catalog valid?"}
+    Validate -->|No| Blocked["Blocked request: no recommendations"]
+    Validate -->|Yes| Coverage["Check genre and mood coverage"]
+    Coverage --> Rank["Score and rank songs"]
+    Rank --> Verify{"Output checks pass?"}
+    Verify -->|No| Withheld["Withhold faulty results"]
+    Verify -->|Yes| Results["Recommendations with status and warnings"]
+    Results --> Human["User reviews results and may revise preferences"]
+    Human -->|Revised request| CLI
+    Pipeline -.-> Logs["Status and error logs"]
+    Tests["Automated reliability tests"] -.-> Pipeline
+```
 
-Scoring judges one song; ranking orders all scored songs. sorted() creates a new list, while .sort() changes a list in place and returns None. Exact score ties retain catalog order.
+## Setup
 
-Data flow: CSV and user preferences → score each song → rank songs → top five with reasons.
-
-The larger genre weight may favor familiar genres over better mood matches, creating a filter bubble.
-
-## Getting Started
-
-Run these commands from the project folder:
+Requires Python 3.10 or newer. Run from the project root. No API key is needed.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-python -m src.main
+python -m src.main --demo
 ```
 
-## Testing
+## Design Decisions and Tradeoffs
 
-Run: python -m pytest -q
+The original scoring rule is retained: two points for genre, one for mood, and up to one for energy similarity. Separating scoring from validation keeps the changes understandable and preserves the original behavior for valid inputs.
 
-Both starter tests passed. They check a preferred song's ranking and a nonempty explanation.
+Verification checks result count, catalog membership, unique IDs, finite and correct scores, descending order, and nonempty explanations. It does not prove that the returned subset is globally optimal or that explanation text accurately describes every contribution.
 
-## Experiments You Tried
+Unknown categories produce clearly labeled partial matches rather than silently pretending to match. Human review is advisory; no approval gate is enforced.
 
-Genre weight was halved from 2 to 1 and energy weight doubled from 1 to 2. Mood stayed at 1. Rooftop Lights rose from fourth to second for pop. Gym Hero rose from third to second for rock. The lofi ordering stayed unchanged.
+Logging goes to the terminal rather than a persistent file. Dependencies from the starter are retained, although the runtime application itself uses Python's standard library.
 
-These are ranking changes; listener feedback would be needed to establish better accuracy. Baseline code was restored afterward.
+## Reproducible Execution Evidence
 
-Two edge cases tested sad high-energy pop and unavailable opera/dramatic labels. The opera profile received energy-only matches because neither category was present.
-
-## Limitations and Risks
-
-The catalog is small and unevenly distributed. Exact matching treats pop and indie pop as different genres. Genre weight can put sad pop above happy indie pop for a happy-pop profile. Lyrics, language, listening history, and changing taste are ignored. Scores are relevance points rather than probabilities of enjoyment.
-
-## Reflection
-
-See model_card.md for evaluation and personal reflection. The personal reflection is included in the model card.
+The following outputs were captured by executing these commands. Exit code 2 is expected for blocked single requests; successful and needs_review requests return 0.
 
 
-## Sample Recommendation Output
+### Normal pop request
 
-Baseline results for three user profiles.
-
+```bash
+python -m src.main --genre pop --mood happy --energy 0.8
+```
 ```text
+INFO: Request status=ok count=5
 Loaded songs: 18
 
-Profile: High-Energy Pop
-Preferences: {'genre': 'pop', 'mood': 'happy', 'energy': 0.8}
-
+Input: {'genre': 'pop', 'mood': 'happy', 'energy': 0.8}
+Status: ok
+Technical checks: passed
 1. Sunrise City | Score: 3.98
    Because: genre match (+2.00); mood match (+1.00); energy similarity (+0.98)
 2. Neon Heartbreak | Score: 2.94
@@ -91,9 +91,21 @@ Preferences: {'genre': 'pop', 'mood': 'happy', 'energy': 0.8}
 5. Midnight Verse | Score: 0.99
    Because: energy similarity (+0.99)
 
-Profile: Chill Lofi
-Preferences: {'genre': 'lofi', 'mood': 'chill', 'energy': 0.35}
+Exit code: 0
+```
 
+### Normal lofi request
+
+```bash
+python -m src.main --genre lofi --mood chill --energy 0.35
+```
+```text
+INFO: Request status=ok count=5
+Loaded songs: 18
+
+Input: {'genre': 'lofi', 'mood': 'chill', 'energy': 0.35}
+Status: ok
+Technical checks: passed
 1. Library Rain | Score: 4.00
    Because: genre match (+2.00); mood match (+1.00); energy similarity (+1.00)
 2. Midnight Coding | Score: 3.93
@@ -105,92 +117,24 @@ Preferences: {'genre': 'lofi', 'mood': 'chill', 'energy': 0.35}
 5. Coffee Shop Stories | Score: 0.98
    Because: energy similarity (+0.98)
 
-Profile: Deep Intense Rock
-Preferences: {'genre': 'rock', 'mood': 'intense', 'energy': 0.9}
-
-1. Storm Runner | Score: 3.99
-   Because: genre match (+2.00); mood match (+1.00); energy similarity (+0.99)
-2. Electric Grief | Score: 2.96
-   Because: genre match (+2.00); energy similarity (+0.96)
-3. Gym Hero | Score: 1.97
-   Because: mood match (+1.00); energy similarity (+0.97)
-4. Brass Parade | Score: 0.98
-   Because: energy similarity (+0.98)
-5. Neon Heartbreak | Score: 0.96
-   Because: energy similarity (+0.96)
+Exit code: 0
 ```
 
-## Weight Experiment Results
+### Unavailable categories
 
-Genre weight changed from 2 to 1; energy weight changed from 1 to 2. Mood stayed at 1.
-
+```bash
+python -m src.main --genre opera --mood dramatic --energy 0.5
+```
 ```text
+INFO: Request status=needs_review count=5
 Loaded songs: 18
 
-Profile: High-Energy Pop
-Preferences: {'genre': 'pop', 'mood': 'happy', 'energy': 0.8}
-
-1. Sunrise City | Score: 3.96
-   Because: genre match (+1.00); mood match (+1.00); energy similarity (+1.96)
-2. Rooftop Lights | Score: 2.92
-   Because: mood match (+1.00); energy similarity (+1.92)
-3. Neon Heartbreak | Score: 2.88
-   Because: genre match (+1.00); energy similarity (+1.88)
-4. Gym Hero | Score: 2.74
-   Because: genre match (+1.00); energy similarity (+1.74)
-5. Midnight Verse | Score: 1.98
-   Because: energy similarity (+1.98)
-
-Profile: Chill Lofi
-Preferences: {'genre': 'lofi', 'mood': 'chill', 'energy': 0.35}
-
-1. Library Rain | Score: 4.00
-   Because: genre match (+1.00); mood match (+1.00); energy similarity (+2.00)
-2. Midnight Coding | Score: 3.86
-   Because: genre match (+1.00); mood match (+1.00); energy similarity (+1.86)
-3. Focus Flow | Score: 2.90
-   Because: genre match (+1.00); energy similarity (+1.90)
-4. Spacewalk Thoughts | Score: 2.86
-   Because: mood match (+1.00); energy similarity (+1.86)
-5. Coffee Shop Stories | Score: 1.96
-   Because: energy similarity (+1.96)
-
-Profile: Deep Intense Rock
-Preferences: {'genre': 'rock', 'mood': 'intense', 'energy': 0.9}
-
-1. Storm Runner | Score: 3.98
-   Because: genre match (+1.00); mood match (+1.00); energy similarity (+1.98)
-2. Gym Hero | Score: 2.94
-   Because: mood match (+1.00); energy similarity (+1.94)
-3. Electric Grief | Score: 2.92
-   Because: genre match (+1.00); energy similarity (+1.92)
-4. Brass Parade | Score: 1.96
-   Because: energy similarity (+1.96)
-5. Neon Heartbreak | Score: 1.92
-   Because: energy similarity (+1.92)
-```
-
-## Edge Case Results
-
-```text
-
-Profile: Sad High-Energy Pop
-Preferences: {'genre': 'pop', 'mood': 'sad', 'energy': 0.95}
-
-1. Neon Heartbreak | Score: 3.91
-   Because: genre match (+2.00); mood match (+1.00); energy similarity (+0.91)
-2. Gym Hero | Score: 2.98
-   Because: genre match (+2.00); energy similarity (+0.98)
-3. Sunrise City | Score: 2.87
-   Because: genre match (+2.00); energy similarity (+0.87)
-4. Electric Grief | Score: 1.99
-   Because: mood match (+1.00); energy similarity (+0.99)
-5. Storm Runner | Score: 0.96
-   Because: energy similarity (+0.96)
-
-Profile: Unknown Genre and Mood
-Preferences: {'genre': 'opera', 'mood': 'dramatic', 'energy': 0.5}
-
+Input: {'genre': 'opera', 'mood': 'dramatic', 'energy': 0.5}
+Status: needs_review
+Technical checks: passed
+WARNING: No catalog genre matches 'opera'.
+WARNING: No catalog mood matches 'dramatic'.
+Review these partial matches or revise your preferences.
 1. Island Afternoon | Score: 0.98
    Because: energy similarity (+0.98)
 2. Porchlight Home | Score: 0.95
@@ -201,4 +145,54 @@ Preferences: {'genre': 'opera', 'mood': 'dramatic', 'energy': 0.5}
    Because: energy similarity (+0.90)
 5. Coffee Shop Stories | Score: 0.87
    Because: energy similarity (+0.87)
+
+Exit code: 0
 ```
+
+### Invalid energy
+
+```bash
+python -m src.main --genre pop --mood happy --energy 1.5
+```
+```text
+WARNING: Request blocked: energy must be a finite number between 0 and 1.
+Loaded songs: 18
+
+Input: {'genre': 'pop', 'mood': 'happy', 'energy': 1.5}
+Status: blocked
+ERROR: energy must be a finite number between 0 and 1.
+
+Exit code: 2
+```
+
+## Testing Summary
+
+```bash
+python -m pytest -q
+```
+```text
+.........................                                                [100%]
+25 passed in 0.06s
+```
+
+The suite covers input normalization, invalid energy and k, missing preferences, empty or invalid catalogs, duplicate IDs, normal ranking, coverage warnings, deliberate score corruption, large k, and CLI error handling.
+
+Successful verification means the checked technical conditions passed. It is not a confidence score or evidence of listener satisfaction.
+
+## Limitations
+
+The 18-song catalog is small, genre-heavy scoring can create filter bubbles, and exact label matching ignores related genres. The system validates the fields needed for recommendation rather than every metadata field. Internal scoring functions remain callable without the pipeline; the CLI uses the checked path.
+
+## Reflection
+
+This extension demonstrates the difference between generating a plausible answer and checking that it meets explicit rules. Responsible-AI reflection, collaboration details, and remaining limitations are documented in model_card.md.
+
+## Portfolio
+
+Code: https://github.com/Cameron-Batts/vibefinder-applied-ai
+
+This project demonstrates my approach to extending a prototype with modular validation, explained results, runtime checks, and reproducible testing. It shows how I can document both what a system verifies and what remains uncertain.
+
+## Presentation
+
+[Presentation walkthrough](presentation.md)

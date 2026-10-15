@@ -14,7 +14,7 @@ def display_result(preferences, result):
     print(f"\nInput: {preferences}")
     print(f"Status: {result['status']}")
     if "verification" in result:
-        print(f"Output verification: {result['verification']}")
+        print(f"Technical checks: {result['verification']}")
     for warning in result.get("warnings", []):
         print(f"WARNING: {warning}")
     if result["status"] == "needs_review":

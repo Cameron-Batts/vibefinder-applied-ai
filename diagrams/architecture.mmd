@@ -1,0 +1,16 @@
+flowchart TD
+    User["User preferences"] --> CLI["CLI: main.py"]
+    CSV["Song catalog: songs.csv"] --> Loader["CSV loader"]
+    Loader --> Pipeline["Request pipeline: system.py"]
+    CLI --> Pipeline
+    Pipeline --> Validate{"Input and catalog valid?"}
+    Validate -->|No| Blocked["Blocked request: no recommendations"]
+    Validate -->|Yes| Coverage["Check genre and mood coverage"]
+    Coverage --> Rank["Score and rank songs"]
+    Rank --> Verify{"Output checks pass?"}
+    Verify -->|No| Withheld["Withhold faulty results"]
+    Verify -->|Yes| Results["Recommendations with status and warnings"]
+    Results --> Human["User reviews results and may revise preferences"]
+    Human -->|Revised request| CLI
+    Pipeline -.-> Logs["Status and error logs"]
+    Tests["Automated reliability tests"] -.-> Pipeline
