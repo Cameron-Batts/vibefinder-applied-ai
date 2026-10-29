@@ -61,7 +61,7 @@ Verification checks result count, catalog membership, unique IDs, finite and cor
 
 Unknown categories produce clearly labeled partial matches rather than silently pretending to match. Human review is advisory; no approval gate is enforced.
 
-Logging goes to the terminal rather than a persistent file. Dependencies from the starter are retained, although the runtime application itself uses Python's standard library.
+Logging goes to the terminal rather than a persistent file. The runtime uses Python's standard library; pytest is the only external test dependency. An optional GitHub Actions workflow runs the test suite on Python 3.10 and 3.12.
 
 ## Reproducible Execution Evidence
 
