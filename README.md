@@ -193,6 +193,3 @@ Code: https://github.com/Cameron-Batts/vibefinder-applied-ai
 
 This project demonstrates my approach to extending a prototype with modular validation, explained results, runtime checks, and reproducible testing. It shows how I can document both what a system verifies and what remains uncertain.
 
-## Presentation
-
-[Presentation walkthrough](presentation.md)
