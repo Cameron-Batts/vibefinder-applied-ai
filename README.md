@@ -15,7 +15,7 @@ The applied system adds validated requests, catalog checks, coverage warnings, r
 
 **Logic:** Each request passes through five steps: validate the input, check catalog coverage, score and rank, verify the output, and show results with a status (`ok`, `needs_review`, `blocked`, or `verification_failed`). The system is rule-based with no LLM, and every song comes with a plain-language reason.
 
-**Reliability:** 28 of 28 automated tests pass. They cover bad input, missing categories, broken catalogs, shared scoring weights, unexpected errors, and the CLI. One test injects a fake score of 99.0 and confirms the system withholds the results.
+**Reliability:** 29 of 29 automated tests pass. They cover bad input, missing categories, broken catalogs, shared scoring weights, unexpected errors, and the CLI. One test injects a fake score of 99.0 and confirms the system withholds the results.
 
 **Reflection:** A result can pass every technical check and still be useless, as the opera request showed. I renamed "Output verification: passed" to "Technical checks: passed" because the first wording overclaimed. After grading, I moved the scoring weights to one shared place and narrowed exception handling so real bugs surface.
 
@@ -61,6 +61,42 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m src.main --demo
+```
+
+## Choosing Inputs
+
+Not sure what to type? Run the built-in guide. Energy runs from 0 (calm) to 1 (intense), and genre and mood must match a label in the catalog to score points.
+
+```bash
+python -m src.main --guide
+```
+```text
+Loaded songs: 18
+
+Energy scale (0 = calm, 1 = intense). Bars show each song:
+  0.16 ###                  Quiet Cathedral
+  0.28 ######               Spacewalk Thoughts
+  0.35 #######              Library Rain
+  0.37 #######              Coffee Shop Stories
+  0.40 ########             Focus Flow
+  0.42 ########             Midnight Coding
+  0.45 #########            Porchlight Home
+  0.52 ##########           Island Afternoon
+  0.75 ###############      Night Drive Loop
+  0.76 ###############      Rooftop Lights
+  0.79 ################     Midnight Verse
+  0.82 ################     Sunrise City
+  0.84 #################    Desert Pulse
+  0.86 #################    Neon Heartbreak
+  0.88 ##################   Brass Parade
+  0.91 ##################   Storm Runner
+  0.93 ###################  Gym Hero
+  0.94 ###################  Electric Grief
+
+Valid genres: afrobeat, ambient, classical, country, hip hop, indie pop, jazz, lofi, pop, reggae, rock, ska, synthwave
+Valid moods: chill, confident, focused, happy, intense, joyful, moody, nostalgic, peaceful, playful, relaxed, sad
+
+Example: python -m src.main --genre pop --mood happy --energy 0.8
 ```
 
 ## Design Decisions and Tradeoffs
@@ -186,7 +222,7 @@ python -m pytest -q
 ```
 ```text
 .........................                                                [100%]
-28 passed in 0.10s
+29 passed in 0.15s
 ```
 
 | Test case | Criteria | Result |
@@ -203,6 +239,7 @@ python -m pytest -q
 | Scoring weight changed in one place | Valid results still accepted | Pass |
 | Unexpected bug (KeyError) inside the recommender | Raised, not reported as a status | Pass |
 | Helper functions given bad data | Raise `ValidationError` | Pass |
+| `--guide` option | Prints energy scale and valid labels, exit code 0 | Pass |
 
 **What worked:** Deliberately injecting a bad score proved the verifier catches corrupted output instead of assuming it does. Blocking bad input before scoring kept every failure readable.
 

@@ -134,3 +134,16 @@ def test_validation_helpers_raise_validation_error(songs):
         validate_catalog([])
     validate_catalog(songs)
 
+
+
+def test_guide_shows_scale_and_valid_labels():
+    result = subprocess.run(
+        [sys.executable, "-m", "src.main", "--guide"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "Energy scale" in result.stdout
+    assert "Valid genres:" in result.stdout
+    assert "Valid moods:" in result.stdout

@@ -31,14 +31,34 @@ def display_result(preferences, result):
         print(f"   Because: {explanation}")
 
 
+def print_guide(songs):
+    """Show the energy scale, plus the genres and moods the catalog supports."""
+    print("\nEnergy scale (0 = calm, 1 = intense). Bars show each song:")
+    for song in sorted(songs, key=lambda item: item["energy"]):
+        bar = "#" * round(song["energy"] * 20)
+        print(f"  {song['energy']:.2f} {bar:<20} {song['title']}")
+    genres = sorted({song["genre"] for song in songs})
+    moods = sorted({song["mood"] for song in songs})
+    print("\nValid genres: " + ", ".join(genres))
+    print("Valid moods: " + ", ".join(moods))
+    print("\nExample: python -m src.main --genre pop --mood happy --energy 0.8")
+
+
 def main():
     """Process CLI requests through the validated recommendation pipeline."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--genre", default="pop")
     parser.add_argument("--mood", default="happy")
-    parser.add_argument("--energy", type=float, default=0.8)
+    parser.add_argument(
+        "--energy", type=float, default=0.8,
+        help="0 (calm) to 1 (intense). Run with --guide to see the scale.",
+    )
     parser.add_argument("--k", type=int, default=5)
     parser.add_argument("--demo", action="store_true")
+    parser.add_argument(
+        "--guide", action="store_true",
+        help="Show the energy scale and valid genres and moods, then exit.",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -56,6 +76,10 @@ def main():
         return 2
 
     print(f"Loaded songs: {len(songs)}")
+
+    if args.guide:
+        print_guide(songs)
+        return 0
 
     if args.demo:
         profiles = [
