@@ -9,6 +9,16 @@ https://github.com/Cameron-Batts/ai110-module3show-musicrecommendersimulation-st
 
 The applied system adds validated requests, catalog checks, coverage warnings, runtime output verification, logging, and automated reliability tests.
 
+## Engineer's Pitch Summary
+
+**Problem:** My Module 3 recommender always returned five songs, even for requests it could not match, such as opera in an 18-song catalog. I extended it so it checks its own input and output and says so when it cannot trust an answer.
+
+**Logic:** Each request passes through five steps: validate the input, check catalog coverage, score and rank, verify the output, and show results with a status (`ok`, `needs_review`, `blocked`, or `verification_failed`). The system is rule-based with no LLM, and every song comes with a plain-language reason.
+
+**Reliability:** 28 of 28 automated tests pass. They cover bad input, missing categories, broken catalogs, shared scoring weights, unexpected errors, and the CLI. One test injects a fake score of 99.0 and confirms the system withholds the results.
+
+**Reflection:** A result can pass every technical check and still be useless, as the opera request showed. I renamed "Output verification: passed" to "Technical checks: passed" because the first wording overclaimed. After grading, I moved the scoring weights to one shared place and narrowed exception handling so real bugs surface.
+
 ## Integrated AI Feature: Reliability System
 
 The selected advanced feature is a reliability and testing system integrated into the main recommendation application.
