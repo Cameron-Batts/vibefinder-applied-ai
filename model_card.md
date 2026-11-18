@@ -32,7 +32,7 @@ Logging records statuses and errors in the terminal. Human review is advisory: u
 
 ## 5. Evaluation and Observed Results
 
-All 29 automated tests passed. The suite includes the two original tests and new cases covering normalization, invalid inputs, catalog problems, partial matches, score corruption, shared scoring weights, unexpected errors, and CLI error handling.
+All 29 core automated tests passed (32 with the optional web app dependency installed). The suite includes the two original tests and new cases covering normalization, invalid inputs, catalog problems, partial matches, score corruption, shared scoring weights, unexpected errors, and CLI error handling.
 
 The normal pop request returned Sunrise City first at 3.98. The lofi request returned Library Rain first at 4.00. The opera/dramatic request produced coverage warnings and energy-based partial matches. Energy 1.5 was blocked with no recommendations and CLI exit code 2.
 

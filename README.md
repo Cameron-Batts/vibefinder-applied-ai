@@ -99,6 +99,17 @@ Valid moods: chill, confident, focused, happy, intense, joyful, moody, nostalgic
 Example: python -m src.main --genre pop --mood happy --energy 0.8
 ```
 
+## Optional Web App
+
+A small Streamlit page gives the same pipeline a visual interface. It has an energy slider, genre and mood dropdowns, and an expandable energy scale for every song. It shows the same statuses and warnings as the command line, and the logic is unchanged.
+
+```bash
+pip install -r requirements-app.txt
+streamlit run app.py
+```
+
+Choose "Other (type your own)" in a dropdown to try a label that is not in the catalog, such as opera, and the page shows `needs_review` with warnings. The "Test the guardrail" checkbox sends an invalid energy of 1.5 and shows `blocked`.
+
 ## Design Decisions and Tradeoffs
 
 The original scoring rule is retained: two points for genre, one for mood, and up to one for energy similarity. Separating scoring from validation keeps the changes understandable and preserves the original behavior for valid inputs.
@@ -222,7 +233,7 @@ python -m pytest -q
 ```
 ```text
 .........................                                                [100%]
-29 passed in 0.15s
+29 passed, 1 skipped in 0.16s
 ```
 
 | Test case | Criteria | Result |
@@ -240,12 +251,15 @@ python -m pytest -q
 | Unexpected bug (KeyError) inside the recommender | Raised, not reported as a status | Pass |
 | Helper functions given bad data | Raise `ValidationError` | Pass |
 | `--guide` option | Prints energy scale and valid labels, exit code 0 | Pass |
+| Web app: default, unknown labels, invalid energy | Shows `ok`, `needs_review`, and `blocked` | Pass (needs Streamlit) |
 
 **What worked:** Deliberately injecting a bad score proved the verifier catches corrupted output instead of assuming it does. Blocking bad input before scoring kept every failure readable.
 
 **What didn't:** The opera and dramatic request passed every technical check yet returned songs that have nothing to do with opera. The checks confirm the math is consistent, not that the music is a good match. I added the `needs_review` status for this reason.
 
 **What I learned:** A result can be valid and still not useful, so a reliability system needs separate signals for "correct" and "relevant."
+
+Without Streamlit installed, the three web app tests are skipped (shown as 1 skipped). With `requirements-app.txt` installed, the suite runs 32 tests and all pass.
 
 The suite covers input normalization, invalid energy and k, missing preferences, empty or invalid catalogs, duplicate IDs, normal ranking, coverage warnings, deliberate score corruption, large k, and CLI error handling.
 
