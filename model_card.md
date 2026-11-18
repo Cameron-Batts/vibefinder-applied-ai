@@ -76,6 +76,9 @@ The project uses AI-assisted code and documentation. Passing tests supports the 
 
 ## 10. Future Improvements
 
+- Store the scoring weights in one shared place so the scorer and the verifier cannot drift apart.
+- Raise a custom validation error for bad input and catch only that, so unexpected programming errors surface instead of being reported as "blocked".
+- Split the request function into separate catalog validation, coverage check, and output verification steps, and validate the catalog once at load time.
 - Check that returned songs are the true top k across the entire catalog.
 - Verify explanation contributions and expand malformed-output tests.
 - Add related-genre matching and listener feedback to evaluate usefulness.

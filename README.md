@@ -59,6 +59,8 @@ The original scoring rule is retained: two points for genre, one for mood, and u
 
 Verification checks result count, catalog membership, unique IDs, finite and correct scores, descending order, and nonempty explanations. It does not prove that the returned subset is globally optimal or that explanation text accurately describes every contribution.
 
+The verifier recomputes each score with the same weights (2.0, 1.0, 1.0) that the scorer uses. That makes it good at catching a corrupted or inconsistent result, but it cannot catch a flaw in the scoring formula itself. It also means the weights live in two places, so changing them in `score_song` without updating the verifier would cause valid results to be withheld. Moving the weights into one shared constant is the next planned fix.
+
 Unknown categories produce clearly labeled partial matches rather than silently pretending to match. Human review is advisory; no approval gate is enforced.
 
 Logging goes to the terminal rather than a persistent file. The runtime uses Python's standard library; pytest is the only external test dependency. An optional GitHub Actions workflow runs the test suite on Python 3.10 and 3.12.
@@ -175,6 +177,24 @@ python -m pytest -q
 25 passed in 0.06s
 ```
 
+| Test case | Criteria | Result |
+|---|---|---|
+| Energy of -0.1, 1.1, NaN, inf, "high", True, or None | Blocked, no recommendations returned | Pass |
+| k of 0, -1, 1.5, or True | Blocked | Pass |
+| Missing genre, mood, or energy | Blocked | Pass |
+| Valid pop request | Status `ok`, verification passed | Pass |
+| Genre and mood not in catalog | Status `needs_review` with warnings | Pass |
+| Empty catalog, bad catalog energy, duplicate IDs | Blocked | Pass |
+| Scorer monkeypatched to return 99.0 | Status `verification_failed`, results withheld | Pass |
+| k larger than the catalog | Returns all available songs | Pass |
+| Invalid request through the CLI | Exits with code 2, no crash | Pass |
+
+**What worked:** Deliberately injecting a bad score proved the verifier catches corrupted output instead of assuming it does. Blocking bad input before scoring kept every failure readable.
+
+**What didn't:** The opera and dramatic request passed every technical check yet returned songs that have nothing to do with opera. The checks confirm the math is consistent, not that the music is a good match. I added the `needs_review` status for this reason.
+
+**What I learned:** A result can be valid and still not useful, so a reliability system needs separate signals for "correct" and "relevant."
+
 The suite covers input normalization, invalid energy and k, missing preferences, empty or invalid catalogs, duplicate IDs, normal ranking, coverage warnings, deliberate score corruption, large k, and CLI error handling.
 
 Successful verification means the checked technical conditions passed. It is not a confidence score or evidence of listener satisfaction.
@@ -191,5 +211,5 @@ This extension demonstrates the difference between generating a plausible answer
 
 Code: https://github.com/Cameron-Batts/vibefinder-applied-ai
 
-This project demonstrates my approach to extending a prototype with modular validation, explained results, runtime checks, and reproducible testing. It shows how I can document both what a system verifies and what remains uncertain.
+As an AI engineer, I treat checking a system's output as part of building it, not an add-on. I made reliability checks part of the request path, tested them by breaking the system on purpose, and wrote down what the checks do not prove. This project demonstrates my approach to extending a prototype with modular validation, explained results, runtime checks, and reproducible testing. It shows how I can document both what a system verifies and what remains uncertain.
 
