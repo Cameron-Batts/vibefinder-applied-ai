@@ -1,6 +1,12 @@
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 
+# Single source of truth for the scoring rule. The runtime verifier in
+# src/system.py reads these same constants.
+GENRE_WEIGHT = 2.0
+MOOD_WEIGHT = 1.0
+ENERGY_WEIGHT = 1.0
+
 @dataclass
 class Song:
     """
@@ -83,15 +89,15 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     reasons = []
 
     if song["genre"].strip().lower() == user_prefs["genre"].strip().lower():
-        score += 2.0
-        reasons.append("genre match (+2.00)")
+        score += GENRE_WEIGHT
+        reasons.append(f"genre match (+{GENRE_WEIGHT:.2f})")
 
     if song["mood"].strip().lower() == user_prefs["mood"].strip().lower():
-        score += 1.0
-        reasons.append("mood match (+1.00)")
+        score += MOOD_WEIGHT
+        reasons.append(f"mood match (+{MOOD_WEIGHT:.2f})")
 
     energy_gap = abs(song["energy"] - user_prefs["energy"])
-    energy_points = 1.0 - energy_gap
+    energy_points = ENERGY_WEIGHT * (1.0 - energy_gap)
     score += energy_points
     reasons.append(f"energy similarity (+{energy_points:.2f})")
 

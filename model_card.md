@@ -32,7 +32,7 @@ Logging records statuses and errors in the terminal. Human review is advisory: u
 
 ## 5. Evaluation and Observed Results
 
-All 25 automated tests passed. The suite includes the two original tests and new cases covering normalization, invalid inputs, catalog problems, partial matches, score corruption, and CLI error handling.
+All 28 automated tests passed. The suite includes the two original tests and new cases covering normalization, invalid inputs, catalog problems, partial matches, score corruption, shared scoring weights, unexpected errors, and CLI error handling.
 
 The normal pop request returned Sunrise City first at 3.98. The lofi request returned Library Rain first at 4.00. The opera/dramatic request produced coverage warnings and energy-based partial matches. Energy 1.5 was blocked with no recommendations and CLI exit code 2.
 
@@ -76,9 +76,6 @@ The project uses AI-assisted code and documentation. Passing tests supports the 
 
 ## 10. Future Improvements
 
-- Store the scoring weights in one shared place so the scorer and the verifier cannot drift apart.
-- Raise a custom validation error for bad input and catch only that, so unexpected programming errors surface instead of being reported as "blocked".
-- Split the request function into separate catalog validation, coverage check, and output verification steps, and validate the catalog once at load time.
 - Check that returned songs are the true top k across the entire catalog.
 - Verify explanation contributions and expand malformed-output tests.
 - Add related-genre matching and listener feedback to evaluate usefulness.

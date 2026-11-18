@@ -59,7 +59,9 @@ The original scoring rule is retained: two points for genre, one for mood, and u
 
 Verification checks result count, catalog membership, unique IDs, finite and correct scores, descending order, and nonempty explanations. It does not prove that the returned subset is globally optimal or that explanation text accurately describes every contribution.
 
-The verifier recomputes each score with the same weights (2.0, 1.0, 1.0) that the scorer uses. That makes it good at catching a corrupted or inconsistent result, but it cannot catch a flaw in the scoring formula itself. It also means the weights live in two places, so changing them in `score_song` without updating the verifier would cause valid results to be withheld. Moving the weights into one shared constant is the next planned fix.
+The scoring weights (`GENRE_WEIGHT`, `MOOD_WEIGHT`, `ENERGY_WEIGHT`) live in one place, `src/recommender.py`, and both the scorer and the verifier read them. A test changes a weight and confirms valid results are still accepted. The verifier still re-derives scores with the same formula, so it catches corrupted or inconsistent output but cannot catch a flaw in the formula itself.
+
+Only two custom exceptions become statuses: `ValidationError` (bad input or catalog, status `blocked`) and `VerificationError` (bad output, status `verification_failed`). Any other exception is a real bug and is allowed to surface, which a test confirms. The request function is split into small steps (`validate_preferences`, `validate_catalog`, `check_coverage`, `verify_recommendations`) so each can be tested alone, and the CLI validates the catalog once at load time.
 
 Unknown categories produce clearly labeled partial matches rather than silently pretending to match. Human review is advisory; no approval gate is enforced.
 
@@ -174,7 +176,7 @@ python -m pytest -q
 ```
 ```text
 .........................                                                [100%]
-25 passed in 0.06s
+28 passed in 0.10s
 ```
 
 | Test case | Criteria | Result |
@@ -188,6 +190,9 @@ python -m pytest -q
 | Scorer monkeypatched to return 99.0 | Status `verification_failed`, results withheld | Pass |
 | k larger than the catalog | Returns all available songs | Pass |
 | Invalid request through the CLI | Exits with code 2, no crash | Pass |
+| Scoring weight changed in one place | Valid results still accepted | Pass |
+| Unexpected bug (KeyError) inside the recommender | Raised, not reported as a status | Pass |
+| Helper functions given bad data | Raise `ValidationError` | Pass |
 
 **What worked:** Deliberately injecting a bad score proved the verifier catches corrupted output instead of assuming it does. Blocking bad input before scoring kept every failure readable.
 

@@ -5,6 +5,8 @@ import csv
 import logging
 from pathlib import Path
 
+from src.errors import ValidationError
+from src.guardrails import validate_catalog
 from src.recommender import load_songs
 from src.system import run_request
 
@@ -47,7 +49,8 @@ def main():
     path = Path(__file__).resolve().parents[1] / "data" / "songs.csv"
     try:
         songs = load_songs(path)
-    except (OSError, ValueError, KeyError, csv.Error) as error:
+        validate_catalog(songs)
+    except (OSError, ValueError, KeyError, csv.Error, ValidationError) as error:
         logging.error("Catalog could not be loaded: %s", error)
         print("ERROR: Check data/songs.csv before requesting recommendations.")
         return 2
@@ -63,7 +66,7 @@ def main():
             {"genre": "pop", "mood": "happy", "energy": 1.5},
         ]
         for preferences in profiles:
-            result = run_request(preferences, songs, args.k)
+            result = run_request(preferences, songs, args.k, catalog_checked=True)
             display_result(preferences, result)
         return 0
 
@@ -72,7 +75,7 @@ def main():
         "mood": args.mood,
         "energy": args.energy,
     }
-    result = run_request(preferences, songs, args.k)
+    result = run_request(preferences, songs, args.k, catalog_checked=True)
     display_result(preferences, result)
     return 0 if result["status"] in ("ok", "needs_review") else 2
 

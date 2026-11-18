@@ -6,7 +6,8 @@ import sys
 
 import pytest
 
-from src.guardrails import validate_preferences
+from src.errors import ValidationError
+from src.guardrails import validate_catalog, validate_preferences
 from src.recommender import load_songs
 from src.system import run_request
 
@@ -108,3 +109,28 @@ def test_invalid_cli_request_exits_cleanly():
     assert result.returncode == 2
     assert "Status: blocked" in result.stdout
     assert "Traceback" not in result.stderr
+
+
+def test_changing_scoring_weights_stays_consistent(songs, monkeypatch):
+    monkeypatch.setattr("src.recommender.GENRE_WEIGHT", 3.0)
+    result = run_request(PREFS, songs)
+    assert result["status"] == "ok"
+    assert result["recommendations"][0][1] == pytest.approx(4.98)
+
+
+def test_unexpected_bug_is_not_hidden(songs, monkeypatch):
+    def buggy_recommender(preferences, catalog, k):
+        raise KeyError("missing field")
+
+    monkeypatch.setattr("src.system.recommend_songs", buggy_recommender)
+    with pytest.raises(KeyError):
+        run_request(PREFS, songs)
+
+
+def test_validation_helpers_raise_validation_error(songs):
+    with pytest.raises(ValidationError):
+        validate_preferences({"genre": "pop", "mood": "happy", "energy": 2})
+    with pytest.raises(ValidationError):
+        validate_catalog([])
+    validate_catalog(songs)
+
